@@ -1,9 +1,12 @@
 import socket
 import threading
+import numpy as np
+import cv2 as cv
 
 # Set up the server socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.bind(('192.168.0.28', 12345))  # Replace 'your_desktop_ip' with your desktop's IP address
+server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+server_socket.bind(('192.168.0.28', 12345))  
 server_socket.listen(5)
 
 print("Server listening on port 12345...")
@@ -14,18 +17,23 @@ client_sockets = []
 def handle_client(client_socket):
     while True:
         # Receive data from the client
-        data = client_socket.recv(1024)
+        data = client_socket.recv(8192)
         if not data:
             break
-        print(f"Received from {client_socket.getpeername()}: {data.decode('utf-8')}")
+        #print(f"Received from {client_socket.getpeername()}: {data.decode('utf-8')}")
 
-        # Send a response back to the client
-        response = "Message received by the server!"
-        client_socket.send(response.encode('utf-8'))
+        # Display the resulting frame
+        cv.imshow('Camera Feed', data)
+        if cv.waitKey(1) == ord('q'):
+            break
+
+        custom_data = "Uplinka and Camera feed is good"
+        client_socket.send(custom_data.encode('utf-8'))
 
     # Close the client socket when the connection is terminated
-    client_socket.close()
     print(f"Connection with {client_socket.getpeername()} closed.")
+    client_socket.close()
+    cv.destroyAllWindows()
 
 # Accept connections and start a new thread for each client
 while True:
