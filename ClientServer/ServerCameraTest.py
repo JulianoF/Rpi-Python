@@ -16,11 +16,25 @@ client_sockets = []
 
 def handle_client(client_socket):
     while True:
-        # Receive data from the client
-        data = client_socket.recv(8192)
-        if not data:
-            break
-        #print(f"Received from {client_socket.getpeername()}: {data.decode('utf-8')}")
+        # Receive the size of the array
+        size_bytes = client_socket.recv(4)
+        array_size = int.from_bytes(size_bytes, byteorder='big')
+
+        # Receive the array data
+        array_bytes = bytearray()
+        received_bytes = 0
+
+        while received_bytes < array_size:
+            chunk = client_socket.recv(min(4096, array_size - received_bytes))
+            if not chunk:
+                break
+            array_bytes.extend(chunk)
+            received_bytes += len(chunk)
+
+        # Convert bytes back to NumPy array
+        received_array = np.frombuffer(array_bytes, dtype=np.int64).reshape((2, 3))
+        print("Received array:")
+        print(received_array)
 
         # Display the resulting frame
         cv.imshow('Camera Feed', data)

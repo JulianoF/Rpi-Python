@@ -15,6 +15,12 @@ while True:
         print("Can't receive frame (stream end?). Exiting ...")
         break
     # Our operations on the frame come here
+    
+    # Get the dimensions (height, width, and channels) of the frame
+    height, width, channels = frame.shape
+
+    print(f"Height: {height}, Width: {width}, Channels: {channels}")
+    
     gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
     
     # Display the resulting frame
