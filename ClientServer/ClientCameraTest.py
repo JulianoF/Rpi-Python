@@ -24,23 +24,13 @@ while True:
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
         break
-    
-    # Get the dimensions (height, width, and channels) of the frame
-    height, width, channels = frame.shape
-
-    print(f"Height: {height}, Width: {width}, Channels: {channels}")
 
     # Send custom data to the server
     print("Sending Frame To Server.")
-    
-    # Convert NumPy array to bytes
-    array_bytes = frame.tobytes()
+    frameBytes = frame.tobytes()
 
-    # Send the size of the array first
-    client_socket.sendall(len(array_bytes).to_bytes(4, byteorder='big'))
-
-    # Send the array data
-    client_socket.sendall(array_bytes)
+    client_socket.sendall(len(frameBytes).to_bytes(4, byteorder='big'))
+    client_socket.sendall(frameBytes)
 
     # Receive a response from the server
     response = client_socket.recv(1024)

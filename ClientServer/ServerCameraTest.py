@@ -32,16 +32,17 @@ def handle_client(client_socket):
             received_bytes += len(chunk)
 
         # Convert bytes back to NumPy array
-        received_array = np.frombuffer(array_bytes, dtype=np.int64).reshape((2, 3))
+        #received_array = np.frombuffer(array_bytes, dtype=np.int64).reshape((1080, 1920,3))
+        frame_array = np.reshape(array_bytes,(1080,1920,3))
         print("Received array:")
-        print(received_array)
+        print(frame_array)
 
         # Display the resulting frame
-        cv.imshow('Camera Feed', data)
+        cv.imshow('Camera Feed', frame_array)
         if cv.waitKey(1) == ord('q'):
             break
 
-        custom_data = "Uplinka and Camera feed is good"
+        custom_data = "Uplink and Camera feed is good"
         client_socket.send(custom_data.encode('utf-8'))
 
     # Close the client socket when the connection is terminated
@@ -58,3 +59,6 @@ while True:
     # Start a new thread to handle the client
     client_thread = threading.Thread(target=handle_client, args=(client_socket,))
     client_thread.start()
+    if not client_thread:
+        server_socket.close()
+        exit()
