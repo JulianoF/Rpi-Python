@@ -6,13 +6,14 @@ import cv2 as cv
 # Set up the server socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-server_socket.bind(('192.168.0.28', 12345))  
+server_socket.bind(('192.168.0.10', 12345))  
 server_socket.listen(5)
 
 print("Server listening on port 12345...")
 
 # List to store client sockets
 client_sockets = []
+threadList = []
 
 def handle_client(client_socket):
     while True:
@@ -48,6 +49,7 @@ def handle_client(client_socket):
     # Close the client socket when the connection is terminated
     print(f"Connection with {client_socket.getpeername()} closed.")
     client_socket.close()
+    threadList.pop()
     cv.destroyAllWindows()
 
 # Accept connections and start a new thread for each client
@@ -58,7 +60,8 @@ while True:
 
     # Start a new thread to handle the client
     client_thread = threading.Thread(target=handle_client, args=(client_socket,))
+    threadList.append(client_thread)
     client_thread.start()
-    if not client_thread:
+    if threadList.count == 0:
         server_socket.close()
         exit()

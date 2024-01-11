@@ -10,7 +10,7 @@ if not cap.isOpened():
 
 # Set up the client socket
 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('192.168.0.28', 12345)  
+server_address = ('192.168.0.10', 12345)  
 
 # Connect to the server
 client_socket.connect(server_address)
