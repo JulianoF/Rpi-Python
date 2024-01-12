@@ -1,3 +1,5 @@
+
+import sys
 import socket
 import numpy as np
 import cv2 as cv
@@ -9,11 +11,21 @@ if not cap.isOpened():
     exit()
 
 # Set up the client socket
-client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_address = ('192.168.0.10', 12345)  
+try: 
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+except socket.error as e: 
+    print ("Error creating socket: %s" % e) 
+    sys.exit(1)
+    
+server_address = (sys.argv[1], 12345)  
 
 # Connect to the server
-client_socket.connect(server_address)
+try: 
+    client_socket.connect(server_address)
+except socket.error as e: 
+    print ("Error Connecting to Server: %s" % e) 
+    sys.exit(1)
+
 print(f"Connected to {server_address}")
 
 while True:

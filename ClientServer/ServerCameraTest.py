@@ -1,15 +1,29 @@
+
 import socket
 import threading
 import numpy as np
 import cv2 as cv
 
-# Set up the server socket
-server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-server_socket.bind(('192.168.0.10', 12345))  
-server_socket.listen(5)
+ip_addr = socket.gethostbyname(socket.gethostname())
 
-print("Server listening on port 12345...")
+# Set up the server socket
+try: 
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+    server_socket.bind((ip_addr, 12345))  
+    server_socket.listen(5)
+except socket.error as e: 
+    print ("Error creating socket: %s" % e) 
+    exit(1)
+
+try: 
+    server_socket.bind((ip_addr, 12345))  
+    server_socket.listen(5)
+except socket.error as e: 
+    print ("Error Opening socket: %s" % e) 
+    exit(1)
+    
+print(f"Server {ip_addr} listening on port 12345...")
 
 # List to store client sockets
 client_sockets = []
@@ -62,6 +76,6 @@ while True:
     client_thread = threading.Thread(target=handle_client, args=(client_socket,))
     threadList.append(client_thread)
     client_thread.start()
-    if threadList.count == 0:
+    if threadList.count() == 0:
         server_socket.close()
         exit()
