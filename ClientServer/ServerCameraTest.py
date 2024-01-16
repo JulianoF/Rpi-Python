@@ -10,14 +10,12 @@ ip_addr = socket.gethostbyname(socket.gethostname())
 try: 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-    server_socket.bind((ip_addr, 12345))  
-    server_socket.listen(5)
 except socket.error as e: 
     print ("Error creating socket: %s" % e) 
     exit(1)
 
 try: 
-    server_socket.bind((ip_addr, 12345))  
+    server_socket.bind(('192.168.0.28', 12345))  
     server_socket.listen(5)
 except socket.error as e: 
     print ("Error Opening socket: %s" % e) 
