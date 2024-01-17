@@ -6,6 +6,12 @@ import cv2 as cv
 
 ip_addr = socket.gethostbyname(socket.gethostname())
 
+try:
+    face_cascade = cv.CascadeClassifier('../cascades/haarcascade_frontalface_default.xml')
+except cv.error as e:
+    print("Error Opening Cascade Data")
+    exit(1)
+    
 # Set up the server socket
 try: 
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -15,7 +21,7 @@ except socket.error as e:
     exit(1)
 
 try: 
-    server_socket.bind(('192.168.0.28', 12345))  
+    server_socket.bind(('10.160.20.16', 12345))  # Change based on location
     server_socket.listen(5)
 except socket.error as e: 
     print ("Error Opening socket: %s" % e) 
@@ -46,10 +52,20 @@ def handle_client(client_socket):
 
         # Convert bytes back to NumPy array
         #received_array = np.frombuffer(array_bytes, dtype=np.int64).reshape((1080, 1920,3))
+        #frame_array = np.reshape(array_bytes,(480,640,3)) #Use for testing on mylaptop
         frame_array = np.reshape(array_bytes,(1080,1920,3))
         print("Received array:")
         print(frame_array)
-
+        
+        #####
+        face_rect = face_cascade.detectMultiScale(frame_array, 
+                                              scaleFactor = 1.2, 
+                                              minNeighbors = 5)
+        for (x, y, w, h) in face_rect:
+            cv.rectangle(frame_array, (x, y), 
+                      (x + w, y + h), (250, 220, 255), 4)               
+        #####
+        
         # Display the resulting frame
         cv.imshow('Camera Feed', frame_array)
         if cv.waitKey(1) == ord('q'):
