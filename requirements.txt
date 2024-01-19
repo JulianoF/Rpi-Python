@@ -1,2 +1,16 @@
-opencv-python
+matplotlib
 numpy
+opencv-python
+pillow
+pyyaml
+requests
+scipy
+torch
+torchvision
+tqdm
+psutil
+py-cpuinfo
+thop
+pandas
+seaborn
+ultralytics

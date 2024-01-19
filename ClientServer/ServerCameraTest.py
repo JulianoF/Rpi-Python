@@ -4,35 +4,15 @@ import threading
 import numpy as np
 import cv2 as cv
 
-ip_addr = socket.gethostbyname(socket.gethostname())
+from ultralytics import YOLO
 
-try:
-    face_cascade = cv.CascadeClassifier('../cascades/haarcascade_frontalface_default.xml')
-except cv.error as e:
-    print("Error Opening Cascade Data")
-    exit(1)
-    
-# Set up the server socket
-try: 
-    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
-except socket.error as e: 
-    print ("Error creating socket: %s" % e) 
-    exit(1)
+# Load a COCO-pretrained YOLOv8n model
+model = YOLO('../YOLOmodels/yolov8n.pt')
 
-try: 
-    server_socket.bind(('10.160.20.16', 12345))  # Change based on location
-    server_socket.listen(5)
-except socket.error as e: 
-    print ("Error Opening socket: %s" % e) 
-    exit(1)
-    
-print(f"Server {ip_addr} listening on port 12345...")
+# Display model information (optional)
+model.info()
 
-# List to store client sockets
-client_sockets = []
-threadList = []
-
+##############################################################
 def handle_client(client_socket):
     while True:
         # Receive the size of the array
@@ -51,20 +31,29 @@ def handle_client(client_socket):
             received_bytes += len(chunk)
 
         # Convert bytes back to NumPy array
-        #received_array = np.frombuffer(array_bytes, dtype=np.int64).reshape((1080, 1920,3))
-        #frame_array = np.reshape(array_bytes,(480,640,3)) #Use for testing on mylaptop
-        frame_array = np.reshape(array_bytes,(1080,1920,3))
-        print("Received array:")
-        print(frame_array)
+        frame_array = np.reshape(array_bytes,(480,640,3)) #Use for testing on mylaptop
+        #frame_array = np.reshape(array_bytes,(1080,1920,3))
         
-        #####
+        #print("Received array:")
+        #print(frame_array)
+        ################ YOLOv8
+        yolo_predicitons = model(frame_array, stream=True)
+        # Process results generator
+        for result in yolo_predicitons:
+            boxes = result.boxes  # Boxes object for bbox outputs
+            probs = result.probs  # Probs object for classification outputs
+            classes = result.names
+        draw_boxes(frame_array,boxes,probs,classes)
+        ################################
+        
+        ##### HAAR CASCASE TEST
         face_rect = face_cascade.detectMultiScale(frame_array, 
                                               scaleFactor = 1.2, 
                                               minNeighbors = 5)
         for (x, y, w, h) in face_rect:
             cv.rectangle(frame_array, (x, y), 
                       (x + w, y + h), (250, 220, 255), 4)               
-        #####
+        ##########################
         
         # Display the resulting frame
         cv.imshow('Camera Feed', frame_array)
@@ -78,7 +67,47 @@ def handle_client(client_socket):
     print(f"Connection with {client_socket.getpeername()} closed.")
     client_socket.close()
     threadList.pop()
-    cv.destroyAllWindows()
+    cv.destroyAllWindows()           
+
+
+def draw_boxes(image, boxes, scores, class_names): #class_ids, scores, class_names):
+    for i, box in enumerate(boxes):
+        x, y, w, h = box
+        color = (0, 255, 0)  # Green color for the bounding box
+        label = "object"#f"{class_names[class_ids[i]]}: {scores[i]:.2f}"
+        cv.rectangle(image, (int(x), int(y)), (int(x + w), int(y + h)), color, 2)
+        cv.putText(image, label, (int(x), int(y) - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+##############################################################
+
+
+ip_addr = socket.gethostbyname(socket.gethostname())
+
+try:
+    face_cascade = cv.CascadeClassifier('../cascades/haarcascade_frontalface_default.xml')
+except cv.error as e:
+    print("Error Opening Cascade Data: %s" % e)
+    exit(1)
+    
+# Set up the server socket
+try: 
+    server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_socket.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+except socket.error as e: 
+    print ("Error creating socket: %s" % e) 
+    exit(1)
+
+try: 
+    server_socket.bind(('10.160.22.152', 12345))  # Change based on location
+    server_socket.listen(5)
+except socket.error as e: 
+    print ("Error Opening socket: %s" % e) 
+    exit(1)
+    
+print(f"Server {ip_addr} listening on port 12345...")
+
+# List to store client sockets
+client_sockets = []
+threadList = []
 
 # Accept connections and start a new thread for each client
 while True:
