@@ -3,6 +3,7 @@ import socket
 import threading
 import numpy as np
 import cv2 as cv
+import torch
 
 from ultralytics import YOLO
 
@@ -31,8 +32,8 @@ def handle_client(client_socket):
             received_bytes += len(chunk)
 
         # Convert bytes back to NumPy array
-        frame_array = np.reshape(array_bytes,(480,640,3)) #Use for testing on mylaptop
-        #frame_array = np.reshape(array_bytes,(1080,1920,3))
+        #frame_array = np.reshape(array_bytes,(480,640,3)) #Use for testing on mylaptop
+        frame_array = np.reshape(array_bytes,(1080,1920,3))
         
         #print("Received array:")
         #print(frame_array)
@@ -43,16 +44,21 @@ def handle_client(client_socket):
             boxes = result.boxes  # Boxes object for bbox outputs
             probs = result.probs  # Probs object for classification outputs
             classes = result.names
-        draw_boxes(frame_array,boxes,probs,classes)
+            class_names = list(classes.keys())
+            class_ids = [class_names.index(name) for name in class_names]
+        draw_boxes(frame_array,boxes,probs,class_ids,classes)
+
+        
+        
         ################################
         
         ##### HAAR CASCASE TEST
-        face_rect = face_cascade.detectMultiScale(frame_array, 
-                                              scaleFactor = 1.2, 
-                                              minNeighbors = 5)
-        for (x, y, w, h) in face_rect:
-            cv.rectangle(frame_array, (x, y), 
-                      (x + w, y + h), (250, 220, 255), 4)               
+        #face_rect = face_cascade.detectMultiScale(frame_array, 
+         #                                     scaleFactor = 1.2, 
+          #                                    minNeighbors = 5)
+        #for (x, y, w, h) in face_rect:
+         #   cv.rectangle(frame_array, (x, y), 
+         #             (x + w, y + h), (250, 220, 255), 4)               
         ##########################
         
         # Display the resulting frame
@@ -70,13 +76,24 @@ def handle_client(client_socket):
     cv.destroyAllWindows()           
 
 
-def draw_boxes(image, boxes, scores, class_names): #class_ids, scores, class_names):
-    for i, box in enumerate(boxes):
-        x, y, w, h = box
+def draw_boxes(image, boxes, scores,class_ids, class_names): #class_ids, scores, class_names):
+    i = 0
+    for box in boxes:
+        i = i + 1
+        print(box.xywh)
+
+        xywh_tensor = box.xywh
+        x, y, w, h = xywh_tensor[0,0].item(), xywh_tensor[0,1].item(), xywh_tensor[0,2].item(), xywh_tensor[0,3].item()
+
+        print(x)
+        print(y)
+        print(w)
+        print(h)
         color = (0, 255, 0)  # Green color for the bounding box
-        label = "object"#f"{class_names[class_ids[i]]}: {scores[i]:.2f}"
-        cv.rectangle(image, (int(x), int(y)), (int(x + w), int(y + h)), color, 2)
+        label = "item"#f"{class_names[class_ids[i]]}: {scores[i]:.2f}"
+        cv.rectangle(image, (int(x-(w/2)), int(y-(w/2))), (int(x + w), int(y + h)), color, 2)
         cv.putText(image, label, (int(x), int(y) - 5), cv.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+    
 ##############################################################
 
 
@@ -97,7 +114,7 @@ except socket.error as e:
     exit(1)
 
 try: 
-    server_socket.bind(('10.160.22.152', 12345))  # Change based on location
+    server_socket.bind(('192.168.0.26', 12345))  # Change based on location
     server_socket.listen(5)
 except socket.error as e: 
     print ("Error Opening socket: %s" % e) 
